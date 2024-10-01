@@ -19,7 +19,8 @@ PIXEL_WIDTH = 32
 
 INTERVAL_REQUEST_DATA = 120  # seconds
 INTERVAL_UPDATE_TIME = 1  # seconds
-INTERVAL_REDRAW = 0.1  # seconds  # 0.033 for 30fps
+TARGET_FPS = 24  # frames per second
+INTERVAL_REDRAW = (1000 / TARGET_FPS) / 1000  # seconds
 
 CLOCK_INITIAL_OFFSET = (7, 0)
 WEATHER_OFFSET = (22, 0)
@@ -33,14 +34,25 @@ def draw_graphic(
     pixels: List[List[Pixel]],
     data: List[List[Pixel]],
     offset: Tuple[int, int],
+    color_override: Tuple[int, int, int] = None,
 ) -> None:
-
     x_offset, y_offset = offset
 
+    # Enumerate through the graphic data
     for y, row in enumerate(data):
         for x, pixel in enumerate(row):
+
+            # Check if the pixel is within the bounds of the display
             if y + y_offset < len(pixels) and x + x_offset < len(pixels[0]):
+
+                # Draw the pixel if it's not transparent
                 if pixel.color != colors.TRANSPARENT_COLOR:
+
+                    # Override the color if wanted
+                    if color_override:
+                        pixel.color = color_override
+
+                    # Draw the pixel
                     pixels[y + y_offset][x + x_offset] = pixel
 
 
@@ -59,7 +71,7 @@ def draw_time(pixels: List[List[Pixel]], show_colon: bool) -> None:
                 offset = (offset[0] + 2, offset[1])
                 continue
         data = graphics.read_image(graphics.get_filepath(char))
-        draw_graphic(pixels, data, offset)
+        draw_graphic(pixels, data, offset, colors.TIME_COLOR)
         offset = (offset[0] + len(data[0]) + 1, offset[1])
 
     # Set a timer to update the time

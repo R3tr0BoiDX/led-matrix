@@ -8,9 +8,9 @@ import colors
 
 GRAVITY = 1
 SNOWFLAKE_COLOR = colors.P8_WHITE
-SNOWFLAKES_COUNT = 10
+SNOWFLAKES_COUNT = 20
 
-INTERVAL_UPDATE_TIME = 0.25  # seconds
+INTERVAL_UPDATE_TIME = 0.7
 
 
 class Snowflake:
@@ -19,7 +19,11 @@ class Snowflake:
 
     def fall(self, height):
         # Move the snowflake down
-        self.pos = (self.pos[0] + random.randint(-1, 1), self.pos[1] + GRAVITY)
+        jitter = random.choices([-1, 0, 1], weights=[10, 80, 10], k=1)[0]
+        self.pos = (
+            self.pos[0] + jitter,
+            self.pos[1] + GRAVITY,
+        )
 
         if self.pos[0] < 0:
             self.pos = (0, self.pos[1])
@@ -45,7 +49,7 @@ class SnowEffect(base.Effect):
     def start(self, buffer: List[List[Pixel]]):
         # Clear the pixel buffer content from previous iteration
         clear_pixel_buffer(buffer)
-        
+
         # Draw the solid white line at the bottom
         for x in range(self.dimensions[0]):
             buffer[self.dimensions[1] - 1][x] = Pixel(SNOWFLAKE_COLOR)

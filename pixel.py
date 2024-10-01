@@ -1,5 +1,6 @@
-import random
-from typing import Tuple
+from typing import Tuple, List
+
+import colors
 
 
 class Pixel:
@@ -13,5 +14,7 @@ class Pixel:
         return self.__str__()
 
 
-def random_color() -> Tuple[int, int, int]:
-    return (random.randint(0, 255), random.randint(0, 255), random.randint(0, 255))
+def clear_pixel_buffer(pixels: List[List[Pixel]]) -> None:
+    for row in pixels:
+        for pixel in row:
+            pixel.color = colors.BACKGROUND_COLOR

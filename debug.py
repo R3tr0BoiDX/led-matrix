@@ -31,25 +31,23 @@ class DebugDisplay(display.Display):
                     pygame.quit()
                     return
 
-            # Fill screen with black
-            screen.fill(colors.BLACK)
-
             # Draw the pixels
             for y, row in enumerate(pixel_array):
                 for x, pixel in enumerate(row):
-                    pygame.draw.rect(
-                        screen,
-                        pixel.color,
-                        pygame.Rect(
-                            x * PIXEL_SIZE, y * PIXEL_SIZE, PIXEL_SIZE, PIXEL_SIZE
-                        ),
-                    )
+                    if pixel.color != colors.TRANSPARENT_COLOR:
+                        pygame.draw.rect(
+                            screen,
+                            pixel.color,
+                            pygame.Rect(
+                                x * PIXEL_SIZE, y * PIXEL_SIZE, PIXEL_SIZE, PIXEL_SIZE
+                            ),
+                        )
         except pygame.error:
             pass
 
     def clear(self):
         try:
-            screen.fill(colors.BLACK)
+            screen.fill(colors.BACKGROUND_COLOR)
         except pygame.error:
             pass
 

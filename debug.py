@@ -11,12 +11,16 @@ PIXEL_SIZE = 40
 # Initialize Pygame
 pygame.init()
 
-# Screen dimensions
-width, height = 32 * PIXEL_SIZE, 8 * PIXEL_SIZE
-screen = pygame.display.set_mode((width, height))
-
 
 class DebugDisplay(display.Display):
+
+    def __init__(self, width: int, height: int):
+        self.width = width
+        self.height = height
+        self.display_size = (width * PIXEL_SIZE, height * PIXEL_SIZE)
+        self.screen = pygame.display.set_mode(self.display_size)
+        pygame.display.set_caption("Matrix emulator")
+
     def display(self):
         try:
             pygame.display.flip()
@@ -36,7 +40,7 @@ class DebugDisplay(display.Display):
                 for x, pixel in enumerate(row):
                     if pixel.color != colors.TRANSPARENT_COLOR:
                         pygame.draw.rect(
-                            screen,
+                            self.screen,
                             pixel.color,
                             pygame.Rect(
                                 x * PIXEL_SIZE, y * PIXEL_SIZE, PIXEL_SIZE, PIXEL_SIZE
@@ -47,7 +51,7 @@ class DebugDisplay(display.Display):
 
     def clear(self):
         try:
-            screen.fill(colors.BACKGROUND_COLOR)
+            self.screen.fill(colors.BACKGROUND_COLOR)
         except pygame.error:
             pass
 

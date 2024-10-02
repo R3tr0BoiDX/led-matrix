@@ -5,10 +5,13 @@ from typing import List, Tuple
 from effects import base
 from pixel import Pixel, clear_pixel_buffer
 import colors
+import graphics
 
 GRAVITY = 1
 SNOWFLAKE_COLOR = colors.P8_WHITE
 SNOWFLAKES_COUNT = 20
+
+SNOWMAN_OFFSET = (26, 0)
 
 INTERVAL_UPDATE_TIME = 0.7
 
@@ -17,7 +20,9 @@ class Snowflake:
     def __init__(self, x, y):
         self.pos = (x, y)
 
-    def fall(self, height):
+    def fall(self, dimensions: Tuple[int, int]):
+        width, height = dimensions
+
         # Move the snowflake down
         jitter = random.choices([-1, 0, 1], weights=[10, 80, 10], k=1)[0]
         self.pos = (
@@ -27,12 +32,12 @@ class Snowflake:
 
         if self.pos[0] < 0:
             self.pos = (0, self.pos[1])
-        elif self.pos[0] >= 32:
-            self.pos = (31, self.pos[1])
+        elif self.pos[0] >= width:
+            self.pos = (width - 1, self.pos[1])
 
         # If it goes off screen, reset to the top
         if self.pos[1] >= height:
-            self.pos = (random.randint(0, 32 - 1), 0)
+            self.pos = (random.randint(0, width - 1), 0)
 
 
 class SnowEffect(base.Effect):
@@ -56,11 +61,18 @@ class SnowEffect(base.Effect):
 
         # Update snowflakes
         for flake in self.snowflakes:
-            flake.fall(self.dimensions[1])
+            flake.fall(self.dimensions)
 
         # Draw snowflakes
         for flake in self.snowflakes:
             buffer[flake.pos[1]][flake.pos[0]] = Pixel(SNOWFLAKE_COLOR)
+
+        # Draw the snowman
+        graphics.draw_graphic(
+            buffer,
+            graphics.read_image(graphics.get_filepath("snowman")),
+            SNOWMAN_OFFSET,
+        )
 
         # Set a timer to update the time
         threading.Timer(INTERVAL_UPDATE_TIME, self.start, args=(buffer,)).start()

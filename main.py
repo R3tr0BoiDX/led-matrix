@@ -2,25 +2,22 @@ import sys
 import threading
 import time
 from datetime import datetime
-from typing import List, Tuple
+from typing import List
 
 import requests
 
 import colors
 import graphics
+import settings
 from debug import DebugDisplay
+from effects.snow import SnowEffect
 from pixel import Pixel, clear_pixel_buffer
 from weather import WeatherData, get_weather
-from effects.snow import SnowEffect
 
 DEBUG_MODE = True
-PIXEL_HEIGHT = 8
-PIXEL_WIDTH = 32
 
-INTERVAL_REQUEST_DATA = 120  # seconds
 INTERVAL_UPDATE_TIME = 1  # seconds
 TARGET_FPS = 24  # frames per second
-INTERVAL_REDRAW = (1000 / TARGET_FPS) / 1000  # seconds
 
 CLOCK_INITIAL_OFFSET = (7, 0)
 WEATHER_OFFSET = (22, 0)
@@ -28,32 +25,6 @@ WEATHER_OFFSET = (22, 0)
 TIME_FORMAT = "%H:%M"
 
 RUNNING = True
-
-
-def draw_graphic(
-    pixels: List[List[Pixel]],
-    data: List[List[Pixel]],
-    offset: Tuple[int, int],
-    color_override: Tuple[int, int, int] = None,
-) -> None:
-    x_offset, y_offset = offset
-
-    # Enumerate through the graphic data
-    for y, row in enumerate(data):
-        for x, pixel in enumerate(row):
-
-            # Check if the pixel is within the bounds of the display
-            if y + y_offset < len(pixels) and x + x_offset < len(pixels[0]):
-
-                # Draw the pixel if it's not transparent
-                if pixel.color != colors.TRANSPARENT_COLOR:
-
-                    # Override the color if wanted
-                    if color_override:
-                        pixel.color = color_override
-
-                    # Draw the pixel
-                    pixels[y + y_offset][x + x_offset] = pixel
 
 
 def draw_time(pixels: List[List[Pixel]], show_colon: bool) -> None:
@@ -64,14 +35,18 @@ def draw_time(pixels: List[List[Pixel]], show_colon: bool) -> None:
     now = datetime.now().strftime(TIME_FORMAT)
     offset = CLOCK_INITIAL_OFFSET
     for char in str(now):
+
+        # Handle the colon character specially
         if char == ":":
             if show_colon:
                 char = "colon"
             else:
                 offset = (offset[0] + 2, offset[1])
                 continue
+
+        # Draw the character
         data = graphics.read_image(graphics.get_filepath(char))
-        draw_graphic(pixels, data, offset, colors.TIME_COLOR)
+        graphics.draw_graphic(pixels, data, offset, colors.TIME_COLOR)
         offset = (offset[0] + len(data[0]) + 1, offset[1])
 
     # Set a timer to update the time
@@ -83,7 +58,7 @@ def draw_time(pixels: List[List[Pixel]], show_colon: bool) -> None:
 def draw_weather(pixels: List[List[Pixel]], weather_data: WeatherData) -> None:
     icon = weather_data.current.weather[0].icon
     data = graphics.read_image(graphics.get_filepath(icon))
-    draw_graphic(pixels, data, WEATHER_OFFSET)
+    graphics.draw_graphic(pixels, data, WEATHER_OFFSET)
 
 
 class WeatherFetcher:
@@ -98,7 +73,9 @@ class WeatherFetcher:
             print("Error fetching weather data:", e)
 
         # Set a timer to fetch data again
-        threading.Timer(INTERVAL_REQUEST_DATA, self.get_weather_data).start()
+        threading.Timer(
+            settings.get_weather_request_interval(), self.get_weather_data
+        ).start()
 
 
 def main():
@@ -108,19 +85,21 @@ def main():
     # Start fetching weather data
     data_holder.get_weather_data()
 
+    # Get the display dimensions
+    width = settings.get_display_width()
+    height = settings.get_display_height()
+
     # Initialize buffer and start drawing
     time_buffer = [
-        [Pixel(colors.BACKGROUND_COLOR) for x in range(PIXEL_WIDTH)]
-        for y in range(PIXEL_HEIGHT)
+        [Pixel(colors.BACKGROUND_COLOR) for _x in range(width)] for _y in range(height)
     ]
     draw_time(time_buffer, False)
 
     # Initialize pixel buffer
     effect_buffer = [
-        [Pixel(colors.BACKGROUND_COLOR) for x in range(PIXEL_WIDTH)]
-        for y in range(PIXEL_HEIGHT)
+        [Pixel(colors.BACKGROUND_COLOR) for x in range(width)] for y in range(height)
     ]
-    SnowEffect((PIXEL_WIDTH, PIXEL_HEIGHT)).start(effect_buffer)
+    SnowEffect((width, height)).start(effect_buffer)
 
     # Start updating weather
     # if data_holder.weather:
@@ -128,7 +107,7 @@ def main():
     #     draw_weather(pixels, data_holder.weather)
 
     if DEBUG_MODE:
-        display = DebugDisplay()
+        display = DebugDisplay(width, height)
     else:
         # todo: implement hardware.py
         # from hardware import Display
@@ -149,7 +128,8 @@ def main():
         display.display()
 
         # Prepare next iteration
-        time.sleep(INTERVAL_REDRAW)
+        redraw_interval = (1000 / settings.get_target_fps()) / 1000  # seconds
+        time.sleep(redraw_interval)
 
     display.exit()
     sys.exit()

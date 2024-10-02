@@ -1,8 +1,0 @@
-{
-    "latitude": "50.315010",
-    "longitude": "9.189950",
-    "exclude": "minutely,hourly,daily,alerts",
-    "units": "metric",
-    "language": "de",
-    "api_key": "8994044a2b4940d6e51866f19e65acb2"
-}

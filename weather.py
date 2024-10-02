@@ -1,14 +1,9 @@
-import json
 import requests
 
-SETTINGS_FILE = "settings.json"
+import settings
 
 BASE_URL = "https://api.openweathermap.org/data/3.0/onecall"
 TIMEOUT = 10
-
-SETTINGS = {}
-with open(SETTINGS_FILE, "r", encoding="utf-8") as file:
-    SETTINGS = json.load(file)
 
 
 class Weather:
@@ -72,12 +67,12 @@ def call_api(params: dict) -> dict:
 
 def get_weather() -> WeatherData:
     parameter = {
-        "lat": SETTINGS["latitude"],
-        "lon": SETTINGS["longitude"],
-        "exclude": SETTINGS["exclude"],
-        "units": SETTINGS["units"],
-        "lang": SETTINGS["language"],
-        "appid": SETTINGS["api_key"],
+        "lat": settings.get_latitude(),
+        "lon": settings.get_longitude(),
+        "exclude": settings.get_exclude(),
+        "units": settings.get_units(),
+        "lang": settings.get_language(),
+        "appid": settings.get_api_key(),
     }
 
     data = call_api(parameter)

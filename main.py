@@ -1,4 +1,5 @@
-import sys
+import os
+import signal
 import threading
 import time
 from datetime import datetime
@@ -6,14 +7,14 @@ from typing import List
 
 import requests
 
+import buffer as buf
 import colors
 import graphics
 import settings
-from effects.snow import SnowEffect
 from effects.rain import RainEffect
+# from effects.snow import SnowEffect
 from pixel import Pixel, clear_pixel_buffer
 from weather import WeatherData, get_weather
-import buffer
 
 INTERVAL_UPDATE_TIME = 1  # seconds
 TARGET_FPS = 24  # frames per second
@@ -24,10 +25,13 @@ TIME_FORMAT = "%H:%M"
 
 RUNNING = True
 
+lock = threading.Lock()
 
-def draw_time(pixels: List[List[Pixel]], show_colon: bool) -> None:
-    # Clear the pixel buffer content from previous iteration
-    clear_pixel_buffer(pixels)
+
+def draw_time(buffer: List[List[Pixel]], show_colon: bool) -> None:
+
+    # Create a new buffer based on the given buffer size
+    work_buffer = buf.get_new_buffer(len(buffer[0]), len(buffer))
 
     # Update the on-screen time
     now = datetime.now().strftime(TIME_FORMAT)
@@ -44,19 +48,29 @@ def draw_time(pixels: List[List[Pixel]], show_colon: bool) -> None:
 
         # Draw the character
         data = graphics.read_image(graphics.get_filepath(char))
-        graphics.draw_graphic(pixels, data, offset, colors.TIME_COLOR)
+        graphics.draw_graphic(work_buffer, data, offset, colors.TIME_COLOR)
         offset = (offset[0] + len(data[0]) + 1, offset[1])
+
+    with lock:
+        # Clear the pixel buffer content from previous iteration
+        clear_pixel_buffer(buffer)
+
+        # Copy the work buffer to the display buffer
+        buf.copy_buffers(work_buffer, buffer)
 
     # Set a timer to update the time
     threading.Timer(
-        INTERVAL_UPDATE_TIME, draw_time, args=(pixels, not show_colon)
+        INTERVAL_UPDATE_TIME, draw_time, args=(buffer, not show_colon)
     ).start()
 
 
-def draw_weather(pixels: List[List[Pixel]], weather_data: WeatherData) -> None:
+def draw_weather(buffer: List[List[Pixel]], weather_data: WeatherData) -> None:
     icon = weather_data.current.weather[0].icon
     data = graphics.read_image(graphics.get_filepath(icon))
-    graphics.draw_graphic(pixels, data, WEATHER_OFFSET)
+    graphics.draw_graphic(buffer, data, WEATHER_OFFSET)
+
+    # Set a timer to update the time
+    threading.Timer(INTERVAL_UPDATE_TIME, draw_weather, args=(buffer,)).start()
 
 
 class WeatherFetcher:
@@ -76,6 +90,12 @@ class WeatherFetcher:
         ).start()
 
 
+def shutdown():
+    # Clear the display and kill the process including all threads
+    buf.shutdown()
+    os.kill(os.getpid(), signal.SIGTERM)
+
+
 def main():
     # Initialize data holder
     data_holder = WeatherFetcher()
@@ -87,38 +107,45 @@ def main():
     width = settings.get_display_width()
     height = settings.get_display_height()
 
-    # Initialize buffer and start drawing
-    time_buffer = [
-        [Pixel(colors.BACKGROUND_COLOR) for _ in range(width)] for _ in range(height)
-    ]
+    # Draw time
+    time_buffer = buf.get_new_buffer(width, height)
     draw_time(time_buffer, False)
 
     # Initialize effects
-    effect_buffer = buffer.get_new_buffer(width, height)
-    # SnowEffect((width, height)).start(effect_buffer)
-    RainEffect((width, height)).start(effect_buffer)
+    effect_buffer = buf.get_new_buffer(width, height)
+    if settings.get_effect():
+        # SnowEffect((width, height)).start(effect_buffer)
+        RainEffect((width, height)).start(effect_buffer)
 
     # Start updating weather
+    # weather_buffer = buf.get_new_buffer(width, height)
     # if data_holder.weather:
-    #     # todo: needs timer update like time
-    #     draw_weather(pixels, data_holder.weather)
+    #     draw_weather(weather_buffer, data_holder.weather)
 
     redraw_interval = (1000 / settings.get_target_fps()) / 1000  # seconds
 
     # Main loop
     while RUNNING:
         # Write data to the buffer
-        buffer.BUFFER_MANAGER.write_to_buffer(effect_buffer)
-        buffer.BUFFER_MANAGER.write_to_buffer(time_buffer)
+        buf.write_to_buffer(effect_buffer)
+        buf.write_to_buffer(time_buffer)
 
         # Display the buffer
-        buffer.display_buffer()
+        buf.display()
+
+        # Clear the buffer
+        buf.clear_buffer()
 
         # Prepare next iteration
         time.sleep(redraw_interval)
 
-    buffer.shutdown()
+    # Unexpected shutdown
+    shutdown()
 
 
 if __name__ == "__main__":
-    main()
+    try:
+        main()
+    except KeyboardInterrupt:
+        print("\nShutting down...")
+        shutdown()

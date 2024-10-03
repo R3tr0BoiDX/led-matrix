@@ -2,16 +2,17 @@ import random
 import threading
 from typing import List, Tuple
 
-from effects import base
-from pixel import Pixel, clear_pixel_buffer
+import buffer as buf
 import colors
 import graphics
+from effects import base
+from pixel import Pixel, clear_pixel_buffer
 
 GRAVITY = 1
 SNOWFLAKE_COLOR = colors.P8_WHITE
 SNOWFLAKES_COUNT = 20
 
-SNOWMAN_OFFSET = (26, 0)
+SNOWMAN_OFFSET = (24, 0)
 
 INTERVAL_UPDATE_TIME = 0.7
 
@@ -44,6 +45,7 @@ class SnowEffect(base.Effect):
 
     def __init__(self, dimensions: Tuple[int, int]):
         self.dimensions = dimensions
+        self.lock = threading.Lock()
 
         width, height = dimensions
         self.snowflakes = [
@@ -52,12 +54,13 @@ class SnowEffect(base.Effect):
         ]
 
     def start(self, buffer: List[List[Pixel]]):
-        # Clear the pixel buffer content from previous iteration
-        clear_pixel_buffer(buffer)
+
+        # Create an effect buffer
+        work_buffer = buf.get_new_buffer(self.dimensions[0], self.dimensions[1])
 
         # Draw the solid white line at the bottom
         for x in range(self.dimensions[0]):
-            buffer[self.dimensions[1] - 1][x] = Pixel(SNOWFLAKE_COLOR)
+            work_buffer[self.dimensions[1] - 1][x] = Pixel(SNOWFLAKE_COLOR)
 
         # Update snowflakes
         for flake in self.snowflakes:
@@ -65,14 +68,21 @@ class SnowEffect(base.Effect):
 
         # Draw snowflakes
         for flake in self.snowflakes:
-            buffer[flake.pos[1]][flake.pos[0]] = Pixel(SNOWFLAKE_COLOR)
+            work_buffer[flake.pos[1]][flake.pos[0]] = Pixel(SNOWFLAKE_COLOR)
 
         # Draw the snowman
         graphics.draw_graphic(
-            buffer,
+            work_buffer,
             graphics.read_image(graphics.get_filepath("snowman")),
             SNOWMAN_OFFSET,
         )
+
+        with self.lock:
+            # Clear the pixel buffer content from previous iteration
+            clear_pixel_buffer(buffer)
+
+            # Copy the work buffer to the display buffer
+            buf.copy_buffers(work_buffer, buffer)
 
         # Set a timer to update the time
         threading.Timer(INTERVAL_UPDATE_TIME, self.start, args=(buffer,)).start()

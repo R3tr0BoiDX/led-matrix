@@ -2,18 +2,16 @@ from typing import List
 
 import colors
 import settings
-from pixel import Pixel
 from debug import DebugDisplay
-
-# todo: think about if this is really needed
+from pixel import Pixel
 
 # Only needed to initialize buffers and display
-_WIDTH = settings.get_display_width()
-_HEIGHT = settings.get_display_height()
+_width = settings.get_display_width()
+_height = settings.get_display_height()
 
-DEBUG_MODE = settings.get_debug()
-if DEBUG_MODE:
-    _DISPLAY = DebugDisplay(_WIDTH, _HEIGHT)
+debug_mode = settings.get_debug()
+if debug_mode:
+    _display = DebugDisplay(_width, _height)
 else:
     # todo: implement hardware.py
     # from hardware import Display
@@ -28,44 +26,43 @@ def get_new_buffer(width: int, height: int) -> List[List[Pixel]]:
     ]
 
 
-def _clear_buffer(buffer: List[List[Pixel]]):
+# Cant be defined further up because it depends on _width, _height and get_new_buffer() :(
+_buffer = get_new_buffer(_width, _height)
+
+
+def clear_buffer():
+    _clear_a_buffer(_buffer)
+
+
+def copy_buffers(
+    work_buffer: List[List[Pixel]],
+    display_buffer: List[List[Pixel]],
+):
+    # Swap the buffers
+    for y, row in enumerate(display_buffer):
+        for x, _ in enumerate(row):
+            display_buffer[y][x] = work_buffer[y][x]
+
+
+def _clear_a_buffer(buffer: List[List[Pixel]]):
     # Clear a given buffer
     for y, row in enumerate(buffer):
         for x, _ in enumerate(row):
             buffer[y][x] = Pixel(colors.BACKGROUND_COLOR)
 
 
-def display_buffer():
-    BUFFER_MANAGER.swap_buffers()
-    BUFFER_MANAGER.clear_back_buffer()
-    BUFFER_MANAGER.display()
+def write_to_buffer(data: List[List[Pixel]]):
+    for y, row in enumerate(data):
+        for x, pixel in enumerate(row):
+            if pixel.color != colors.TRANSPARENT_COLOR:
+                _buffer[y][x] = pixel
+
+
+def display():
+    _display.clear()
+    _display.update(_buffer)
+    _display.display()
 
 
 def shutdown():
-    _DISPLAY.shutdown()
-
-
-class BufferManager:
-    def __init__(self, width, height):
-        self.front_buffer = get_new_buffer(width, height)
-        self.back_buffer = get_new_buffer(width, height)
-
-    def clear_back_buffer(self):
-        _clear_buffer(self.back_buffer)
-
-    def write_to_buffer(self, data: List[List[Pixel]]):
-        for y, row in enumerate(data):
-            for x, pixel in enumerate(row):
-                if pixel.color != colors.TRANSPARENT_COLOR:
-                    self.back_buffer[y][x] = pixel
-
-    def swap_buffers(self):
-        self.front_buffer, self.back_buffer = self.back_buffer, self.front_buffer
-
-    def display(self):
-        _DISPLAY.clear()
-        _DISPLAY.update(self.front_buffer)
-        _DISPLAY.display()
-
-
-BUFFER_MANAGER = BufferManager(_WIDTH, _HEIGHT)
+    _display.shutdown()

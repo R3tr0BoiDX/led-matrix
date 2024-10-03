@@ -70,7 +70,7 @@ class RainEffect(base.Effect):
         while len(raindrops) < count:
 
             # Try to place a raindrop
-            for tries in range(MAX_TRIES):
+            for tries in range(MAX_TRIES + 1):
 
                 # Randomly place a raindrop
                 x = random.randint(0, width - 1)
@@ -94,8 +94,8 @@ class RainEffect(base.Effect):
 
     def start(self, buffer: List[List[Pixel]]):
 
-        # Create an effect buffer
-        effect_buffer = buf.get_new_buffer(self.dimensions[0], self.dimensions[1])
+        # Create the work buffer
+        work_buffer = buf.get_new_buffer(self.dimensions[0], self.dimensions[1])
 
         # Track x-coordinates where raindrops are at the top
         occupied_x = set()
@@ -107,13 +107,13 @@ class RainEffect(base.Effect):
         # Draw raindrops
         for drop in self.raindrops:
             if drop.pos[1] < self.dimensions[1]:
-                effect_buffer[drop.pos[1]][drop.pos[0]] = Pixel(RAIN_COLOR)
+                work_buffer[drop.pos[1]][drop.pos[0]] = Pixel(RAIN_COLOR)
             if drop.pos[1] > 0:
-                effect_buffer[drop.pos[1] - 1][drop.pos[0]] = Pixel(RAIN_COLOR)
+                work_buffer[drop.pos[1] - 1][drop.pos[0]] = Pixel(RAIN_COLOR)
 
         # Draw the umbrella
         graphics.draw_graphic(
-            effect_buffer,
+            work_buffer,
             graphics.read_image(graphics.get_filepath(UMBRELLA_GRAPHIC)),
             UMBRELLA_OFFSET,
         )
@@ -122,10 +122,8 @@ class RainEffect(base.Effect):
             # Clear the pixel buffer content from previous iteration
             clear_pixel_buffer(buffer)
 
-            # Copy the effect buffer to the display buffer
-            for y, row in enumerate(effect_buffer):
-                for x, pixel in enumerate(row):
-                    buffer[y][x] = pixel
+            # Copy the work buffer to the display buffer
+            buf.copy_buffers(work_buffer, buffer)
 
         # Set a timer to update the time
         threading.Timer(INTERVAL_UPDATE_TIME, self.start, args=(buffer,)).start()

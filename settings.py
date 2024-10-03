@@ -49,3 +49,7 @@ def get_display_width() -> int:
 
 def get_target_fps() -> int:
     return SETTINGS.get("target_fps")
+
+
+def get_effect() -> bool:
+    return SETTINGS.get("effects")

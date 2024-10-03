@@ -1,10 +1,13 @@
+import os
+import signal
 from typing import List
 
+os.environ["PYGAME_HIDE_SUPPORT_PROMPT"] = "1"
 import pygame
 
+import colors
 import display
 from pixel import Pixel
-import colors
 
 PIXEL_SIZE = 40
 
@@ -32,8 +35,11 @@ class DebugDisplay(display.Display):
             # Check for quit event
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:
-                    pygame.quit()
-                    return
+                    self.shutdown()
+
+                elif event.type == pygame.KEYDOWN:
+                    if event.key == pygame.K_ESCAPE:
+                        self.shutdown()
 
             # Draw the pixels
             for y, row in enumerate(pixel_array):
@@ -55,7 +61,9 @@ class DebugDisplay(display.Display):
         except pygame.error:
             pass
 
-    def exit(self):
+    def shutdown(self):
         self.clear()
         self.display()
         pygame.quit()
+        # Kill to also stop threads
+        os.kill(os.getpid(), signal.SIGTERM)

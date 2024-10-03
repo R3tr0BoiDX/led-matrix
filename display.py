@@ -3,9 +3,6 @@ from typing import List
 
 from pixel import Pixel
 
-# todo: use values from config
-PIXEL_WIDTH = 32
-
 
 class Display(ABC):
     @abstractmethod
@@ -21,5 +18,5 @@ class Display(ABC):
         pass
 
     @abstractmethod
-    def exit(self):
+    def shutdown(self):
         pass

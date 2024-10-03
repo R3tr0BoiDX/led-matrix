@@ -9,19 +9,17 @@ import requests
 import colors
 import graphics
 import settings
-from debug import DebugDisplay
 from effects.snow import SnowEffect
+from effects.rain import RainEffect
 from pixel import Pixel, clear_pixel_buffer
 from weather import WeatherData, get_weather
-
-DEBUG_MODE = True
+import buffer
 
 INTERVAL_UPDATE_TIME = 1  # seconds
 TARGET_FPS = 24  # frames per second
 
-CLOCK_INITIAL_OFFSET = (7, 0)
+CLOCK_INITIAL_OFFSET = (3, 0)
 WEATHER_OFFSET = (22, 0)
-
 TIME_FORMAT = "%H:%M"
 
 RUNNING = True
@@ -91,48 +89,35 @@ def main():
 
     # Initialize buffer and start drawing
     time_buffer = [
-        [Pixel(colors.BACKGROUND_COLOR) for _x in range(width)] for _y in range(height)
+        [Pixel(colors.BACKGROUND_COLOR) for _ in range(width)] for _ in range(height)
     ]
     draw_time(time_buffer, False)
 
-    # Initialize pixel buffer
-    effect_buffer = [
-        [Pixel(colors.BACKGROUND_COLOR) for x in range(width)] for y in range(height)
-    ]
-    SnowEffect((width, height)).start(effect_buffer)
+    # Initialize effects
+    effect_buffer = buffer.get_new_buffer(width, height)
+    # SnowEffect((width, height)).start(effect_buffer)
+    RainEffect((width, height)).start(effect_buffer)
 
     # Start updating weather
     # if data_holder.weather:
     #     # todo: needs timer update like time
     #     draw_weather(pixels, data_holder.weather)
 
-    if DEBUG_MODE:
-        display = DebugDisplay(width, height)
-    else:
-        # todo: implement hardware.py
-        # from hardware import Display
-        # display = Display()
-        pass
+    redraw_interval = (1000 / settings.get_target_fps()) / 1000  # seconds
 
     # Main loop
     while RUNNING:
-        # Clear the pixel and
-        display.clear()
+        # Write data to the buffer
+        buffer.BUFFER_MANAGER.write_to_buffer(effect_buffer)
+        buffer.BUFFER_MANAGER.write_to_buffer(time_buffer)
 
-        # Update display
-        # todo: merge the buffers and update once
-        display.update(effect_buffer)
-        display.update(time_buffer)
-
-        # Display the content
-        display.display()
+        # Display the buffer
+        buffer.display_buffer()
 
         # Prepare next iteration
-        redraw_interval = (1000 / settings.get_target_fps()) / 1000  # seconds
         time.sleep(redraw_interval)
 
-    display.exit()
-    sys.exit()
+    buffer.shutdown()
 
 
 if __name__ == "__main__":

@@ -1,0 +1,30 @@
+{
+    "version": "2.0.0",
+    "tasks": [
+        {
+            "label": "copyOnPi",
+            "type": "shell",
+            "command": "scp ${file} ${config:sshUser}@${config:sshEndpoint}:~/remote/${fileBasename}"
+        },
+        {
+            "label": "startOnPi",
+            "type": "shell",
+            "command": "ssh ${config:sshUser}@${config:sshEndpoint} 'nohup python3 -m debugpy --listen 0.0.0.0:5678 --wait-for-client ~/remote/${fileBasename} > /dev/null 2>&1 &'"
+        },
+        {
+            "label": "wait",
+            "type": "shell",
+            "command": "sleep 6"
+        },
+        {
+            "label": "copyAndStartOnPi",
+            "dependsOrder": "sequence",
+            "dependsOn": ["copyOnPi", "startOnPi", "wait"]
+        },
+        {
+            "label": "cleanupOnPi",
+            "type": "shell",
+            "command": "ssh ${config:sshUser}@${config:sshEndpoint} 'pkill -9 python3'"
+        },
+    ]    
+}

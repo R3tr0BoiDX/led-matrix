@@ -1,0 +1,12 @@
+debug: true
+latitude: "51.178810"
+longitude: "-1.826169"
+exclude: "minutely,hourly,daily,alerts"
+units: "metric"
+language: "en"
+api_key: "YOUR_OPENWEATHERMAP_API_KEY"
+weather_request_interval: 120
+display_height: 8
+display_width: 32
+target_fps: 24
+effects: true

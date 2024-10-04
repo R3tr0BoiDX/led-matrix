@@ -11,7 +11,8 @@ import buffer as buf
 import colors
 import graphics
 import settings
-from effects.rain import RainEffect
+
+# from effects.rain import RainEffect
 # from effects.snow import SnowEffect
 from pixel import Pixel, clear_pixel_buffer
 from weather import WeatherData, get_weather
@@ -70,7 +71,9 @@ def draw_weather(buffer: List[List[Pixel]], weather_data: WeatherData) -> None:
     graphics.draw_graphic(buffer, data, WEATHER_OFFSET)
 
     # Set a timer to update the time
-    threading.Timer(INTERVAL_UPDATE_TIME, draw_weather, args=(buffer,)).start()
+    threading.Timer(
+        INTERVAL_UPDATE_TIME, draw_weather, args=(buffer, weather_data)
+    ).start()
 
 
 class WeatherFetcher:
@@ -98,10 +101,10 @@ def shutdown():
 
 def main():
     # Initialize data holder
-    data_holder = WeatherFetcher()
+    weather_data_provider = WeatherFetcher()
 
     # Start fetching weather data
-    data_holder.get_weather_data()
+    weather_data_provider.get_weather_data()
 
     # Get the display dimensions
     width = settings.get_display_width()
@@ -111,16 +114,17 @@ def main():
     time_buffer = buf.get_new_buffer(width, height)
     draw_time(time_buffer, False)
 
+    # Draw weather
+    weather_buffer = buf.get_new_buffer(width, height)
+    if weather_data_provider.weather:
+        draw_weather(weather_buffer, weather_data_provider.weather)
+
     # Initialize effects
     effect_buffer = buf.get_new_buffer(width, height)
     if settings.get_effect():
         # SnowEffect((width, height)).start(effect_buffer)
-        RainEffect((width, height)).start(effect_buffer)
-
-    # Start updating weather
-    # weather_buffer = buf.get_new_buffer(width, height)
-    # if data_holder.weather:
-    #     draw_weather(weather_buffer, data_holder.weather)
+        # RainEffect((width, height)).start(effect_buffer)
+        pass
 
     redraw_interval = (1000 / settings.get_target_fps()) / 1000  # seconds
 
@@ -128,6 +132,7 @@ def main():
     while RUNNING:
         # Write data to the buffer
         buf.write_to_buffer(effect_buffer)
+        buf.write_to_buffer(weather_buffer)
         buf.write_to_buffer(time_buffer)
 
         # Display the buffer

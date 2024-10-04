@@ -1,78 +1,83 @@
-from typing import Tuple
 import time
+from typing import List, Tuple
 
-import _rpi_ws281x as ws281x
 from rpi_ws281x import Color, PixelStrip
 
-# TODO: source from settings
-LED_HEIGHT = 8
-LED_WIDTH = 32
-
-TARGET_FREQ = ws281x.WS2811_TARGET_FREQ
-GPIO_PIN = 18  # todo: add to settings
-DMA = 10
-LED_COUNT = LED_WIDTH * LED_HEIGHT
-STRIP_TYPE = ws281x.WS2812_STRIP
-INVERTED = False
-BRIGHTNESS = 255
-CHANNEL = 0
+import display.base as display
+import settings
+from pixel import Pixel
+import colors
 
 
-def clear(leds: PixelStrip):
-    for i in range(leds.numPixels()):
-        leds.setPixelColor(i, Color(0, 0, 0))
-    leds.show()
-
-
-def flush(leds: PixelStrip):
-    for i in range(leds.numPixels()):
-        leds.setPixelColor(i, Color(0, 0, 0))
-
-
-def set_pixel(pos: Tuple[int, int], color: Color, leds: PixelStrip):
-    leds.setPixelColor(led_matrix_translation(pos), color)
-
-
-def set_brightness(brightness: int, leds: PixelStrip):
-    leds.setBrightness(brightness)
-
-
-def led_matrix_translation(pos: Tuple[int, int]) -> int:
+def _led_matrix_translation(pos: Tuple[int, int], size: Tuple[int, int]) -> int:
     x, y = pos
+    _, height = size
     if _number_is_even(x):
-        return x * LED_HEIGHT + y
+        return x * height + y
     else:
-        return x * LED_HEIGHT + LED_HEIGHT - 1 - y
+        return x * height + height - 1 - y
 
 
 def _number_is_even(number: int) -> bool:
     return number % 2 == 0
 
 
-# TODO: impl the display interface
-class LedDisplay:
-    def __init__(self):
+def _color_translation(color: Tuple[int, int, int]) -> Color:
+    r, g, b = color
+    return Color(r, g, b)
+
+
+class LedDisplay(display.Display):
+    def __init__(self, size: Tuple[int, int]):
+        self.size = size
+        self.ledCount = size[0] * size[1]
+
         # Create pixel object
+        # todo: gamma
         self.leds = PixelStrip(
-            LED_COUNT,
-            GPIO_PIN,
-            TARGET_FREQ,
-            DMA,
-            INVERTED,
-            BRIGHTNESS,
-            CHANNEL,
-            strip_type=STRIP_TYPE,
+            self.ledCount,
+            settings.get_pin(),
+            settings.get_target_frequency(),
+            settings.get_dma(),
+            settings.get_inverted(),
+            settings.get_brightness_day(),
+            settings.get_channel(),
+            settings.get_strip_type(),
+            # look at the rpi_ws281x documentation for more options
+            # https://github.com/jgarff/rpi_ws281x/blob/1f47b59ed603223d1376d36c788c89af67ae2fdc/ws2811.h#L47
         )
 
         # Initialize the library (must be called once before other functions)
         self.leds.begin()
 
         # Clear the display on startup
-        clear(self.leds)
+        self.clear()
+
+    def display(self):
+        self.leds.show()
+
+    def update(self, pixel_array: List[List[Pixel]]):
+        for y, row in enumerate(pixel_array):
+            for x, pixel in enumerate(row):
+                if pixel.color != colors.TRANSPARENT_COLOR:
+                    self.set_pixel((x, y), _color_translation(pixel.color))
+
+    def clear(self):
+        for i in range(self.leds.numPixels()):
+            r, g, b = colors.BACKGROUND_COLOR
+            self.leds.setPixelColor(i, Color(r, g, b))
 
     def shutdown(self):
-        clear(self.leds)
+        self.clear()
+        self.display()
 
+    def set_pixel(self, pos: Tuple[int, int], color: Color):
+        self.leds.setPixelColor(_led_matrix_translation(pos, self.size), color)
+
+    def set_brightness(self, brightness: int):
+        self.leds.setBrightness(brightness)
+
+    # Demo function to test the LED display
     def demo(self):
         for i in range(self.leds.numPixels()):
             self.leds.setPixelColor(i, Color(255, 255, 255))
@@ -84,9 +89,9 @@ class LedDisplay:
 
 if __name__ == "__main__":
     try:
-        matrix = LedDisplay()
-        matrix.demo()
-        matrix.shutdown()
+        leds = LedDisplay((32, 8))
+        leds.demo()
+        leds.shutdown()
     except KeyboardInterrupt:
-        matrix.shutdown()
+        leds.shutdown()
         print("Exiting...")

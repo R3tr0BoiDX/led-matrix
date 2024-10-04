@@ -6,7 +6,7 @@ import buffer as buf
 import colors
 import graphics
 from effects import base
-from pixel import Pixel, clear_pixel_buffer
+from pixel import Pixel
 
 GRAVITY = 1
 SNOWFLAKE_COLOR = colors.P8_WHITE
@@ -78,9 +78,6 @@ class SnowEffect(base.Effect):
         )
 
         with self.lock:
-            # Clear the pixel buffer content from previous iteration
-            clear_pixel_buffer(buffer)
-
             # Copy the work buffer to the display buffer
             buf.copy_buffers(work_buffer, buffer)
 

@@ -1,10 +1,9 @@
 import random
 import threading
 from typing import List, Tuple
-import threading
 
 from effects import base
-from pixel import Pixel, clear_pixel_buffer
+from pixel import Pixel
 import colors
 import graphics
 import buffer as buf
@@ -74,7 +73,7 @@ class RainEffect(base.Effect):
 
                 # Randomly place a raindrop
                 x = random.randint(0, width - 1)
-                
+
                 # Ensure no neighboring raindrops
                 if (
                     x not in occupied_x
@@ -119,9 +118,6 @@ class RainEffect(base.Effect):
         )
 
         with self.lock:
-            # Clear the pixel buffer content from previous iteration
-            clear_pixel_buffer(buffer)
-
             # Copy the work buffer to the display buffer
             buf.copy_buffers(work_buffer, buffer)
 

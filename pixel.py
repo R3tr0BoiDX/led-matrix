@@ -1,6 +1,4 @@
-from typing import Tuple, List
-
-import colors
+from typing import Tuple
 
 
 class Pixel:
@@ -12,9 +10,3 @@ class Pixel:
 
     def __repr__(self):
         return self.__str__()
-
-
-def clear_pixel_buffer(pixels: List[List[Pixel]]) -> None:
-    for row in pixels:
-        for pixel in row:
-            pixel.color = colors.BACKGROUND_COLOR

@@ -13,3 +13,7 @@ general idea
 * replace weather icon with outdoor temp
 * weather displayed via effect
 * change outdoor temp on lil terminal to indoor humidity
+
+# todo
+
+* reimplement the night mode reduced brightness

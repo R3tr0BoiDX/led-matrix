@@ -3,7 +3,6 @@ import platform
 
 import colors
 import settings
-from display.debug import DebugDisplay
 from pixel import Pixel
 
 # Only needed to initialize buffers and display
@@ -11,11 +10,11 @@ _width = settings.get_display_width()
 _height = settings.get_display_height()
 
 if platform.machine() == "x86_64":
+    from display.debug import DebugDisplay
     _display = DebugDisplay(_width, _height)
 elif platform.machine() == "armv6l":
-    # import display.led as led
-    # _display = led.LedDisplay(_width, _height)
-    raise NotImplementedError("LED display not implemented")
+    from display.led import LedDisplay
+    _display = LedDisplay((_width, _height))
 else:
     raise NotImplementedError("Unsupported platform")
 

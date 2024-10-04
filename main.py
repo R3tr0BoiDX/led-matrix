@@ -14,7 +14,7 @@ import settings
 
 # from effects.rain import RainEffect
 # from effects.snow import SnowEffect
-from pixel import Pixel, clear_pixel_buffer
+from pixel import Pixel
 from weather import WeatherData, get_weather
 
 INTERVAL_UPDATE_TIME = 1  # seconds
@@ -26,11 +26,11 @@ TIME_FORMAT = "%H:%M"
 
 RUNNING = True
 
-lock = threading.Lock()
+lock_time = threading.Lock()
+lock_weather = threading.Lock()
 
 
 def draw_time(buffer: List[List[Pixel]], show_colon: bool) -> None:
-
     # Create a new buffer based on the given buffer size
     work_buffer = buf.get_new_buffer(len(buffer[0]), len(buffer))
 
@@ -52,10 +52,7 @@ def draw_time(buffer: List[List[Pixel]], show_colon: bool) -> None:
         graphics.draw_graphic(work_buffer, data, offset, colors.TIME_COLOR)
         offset = (offset[0] + len(data[0]) + 1, offset[1])
 
-    with lock:
-        # Clear the pixel buffer content from previous iteration
-        clear_pixel_buffer(buffer)
-
+    with lock_time:
         # Copy the work buffer to the display buffer
         buf.copy_buffers(work_buffer, buffer)
 
@@ -66,9 +63,16 @@ def draw_time(buffer: List[List[Pixel]], show_colon: bool) -> None:
 
 
 def draw_weather(buffer: List[List[Pixel]], weather_data: WeatherData) -> None:
+    # Create a new buffer based on the given buffer size
+    work_buffer = buf.get_new_buffer(len(buffer[0]), len(buffer))
+
     icon = weather_data.current.weather[0].icon
     data = graphics.read_image(graphics.get_filepath(icon))
-    graphics.draw_graphic(buffer, data, WEATHER_OFFSET)
+    graphics.draw_graphic(work_buffer, data, WEATHER_OFFSET)
+
+    with lock_weather:
+        # Copy the work buffer to the display buffer
+        buf.copy_buffers(work_buffer, buffer)
 
     # Set a timer to update the time
     threading.Timer(

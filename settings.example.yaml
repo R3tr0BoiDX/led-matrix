@@ -10,3 +10,12 @@ display_height: 8
 display_width: 32
 target_fps: 24
 effects: true
+pin: 18
+target_frequency: 800000
+dma: 10
+strip_type: 0x00081000
+inverted: false
+brightness_day: 255
+brightness_night: 127
+change_brightness: true
+channel: 0

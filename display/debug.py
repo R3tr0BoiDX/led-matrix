@@ -6,7 +6,7 @@ os.environ["PYGAME_HIDE_SUPPORT_PROMPT"] = "1"
 import pygame
 
 import colors
-import display
+import display.base as display
 from pixel import Pixel
 
 PIXEL_SIZE = 40

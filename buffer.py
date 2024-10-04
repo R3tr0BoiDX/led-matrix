@@ -1,22 +1,23 @@
 from typing import List
+import platform
 
 import colors
 import settings
-from debug import DebugDisplay
+from display.debug import DebugDisplay
 from pixel import Pixel
 
 # Only needed to initialize buffers and display
 _width = settings.get_display_width()
 _height = settings.get_display_height()
 
-debug_mode = settings.get_debug()
-if debug_mode:
+if platform.machine() == "x86_64":
     _display = DebugDisplay(_width, _height)
+elif platform.machine() == "armv6l":
+    # import display.led as led
+    # _display = led.LedDisplay(_width, _height)
+    raise NotImplementedError("LED display not implemented")
 else:
-    # todo: implement hardware.py
-    # from hardware import Display
-    # display = Display()
-    pass
+    raise NotImplementedError("Unsupported platform")
 
 
 def get_new_buffer(width: int, height: int) -> List[List[Pixel]]:

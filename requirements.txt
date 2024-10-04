@@ -1,3 +1,4 @@
 Pillow
 requests
 PyYAML
+rpi_ws281x

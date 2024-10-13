@@ -11,9 +11,11 @@ _height = settings.get_display_height()
 
 if platform.machine() == "x86_64":
     from display.debug import DebugDisplay
+
     _display = DebugDisplay(_width, _height)
 elif platform.machine() == "armv6l":
     from display.led import LedDisplay
+
     _display = LedDisplay((_width, _height))
 else:
     raise NotImplementedError("Unsupported platform")
@@ -24,6 +26,10 @@ def get_new_buffer(width: int, height: int) -> List[List[Pixel]]:
     return [
         [Pixel(colors.BACKGROUND_COLOR) for _ in range(width)] for _ in range(height)
     ]
+
+
+def get_display():
+    return _display
 
 
 # Cant be defined further up because it depends on _width, _height and get_new_buffer() :(

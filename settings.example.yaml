@@ -1,21 +1,26 @@
 debug: true
-latitude: "51.178810"
-longitude: "-1.826169"
-exclude: "minutely,hourly,daily,alerts"
-units: "metric"
-language: "en"
-api_key: "YOUR_OPENWEATHERMAP_API_KEY"
-weather_request_interval: 120
-display_height: 8
-display_width: 32
-target_fps: 24
-effects: true
-pin: 18
-target_frequency: 800000
-dma: 10
-strip_type: 0x00081000
-inverted: false
-brightness_day: 255
-brightness_night: 127
-change_brightness: true
-channel: 0
+weather:
+  latitude: "51.178810"
+  longitude: "-1.826169"
+  exclude: "minutely,hourly,daily,alerts"
+  units: "metric"
+  language: "en"
+  api_key: "YOUR_OPENWEATHERMAP_API_KEY"
+  weather_request_interval: 120
+  effects: true
+display:
+  display_height: 8
+  display_width: 32
+  target_fps: 24
+  effects: true
+  pin: 18
+  target_frequency: 800000
+  dma: 10
+  strip_type: 0x00081000
+  inverted: false
+  channel: 0
+  brightness: 255
+  brightness_night: 127
+  change_brightness: true
+network:
+  port: 8080

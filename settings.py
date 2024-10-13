@@ -3,89 +3,122 @@ import yaml
 SETTINGS_FILE = "settings.yaml"
 
 _settings = {}
-with open(SETTINGS_FILE, "r", encoding="utf-8") as file:
-    _settings = yaml.safe_load(file)
+try:
+    with open(SETTINGS_FILE, "r", encoding="utf-8") as file:
+        _settings = yaml.safe_load(file)
+except FileNotFoundError as e:
+    raise FileNotFoundError(f"Error: {SETTINGS_FILE} not found.") from e
+except yaml.YAMLError as e:
+    raise ValueError(f"Error parsing {SETTINGS_FILE}") from e
 
 
+# Helper function to navigate nested dictionaries using a path
+def get_value(path: str):
+    keys = path.split("/")
+    value = _settings
+    try:
+        for key in keys:
+            value = value[key]
+        return value
+    except KeyError as e:
+        raise KeyError(f"Missing required setting for YAML path: '{path}'") from e
+
+
+# General settings
 def get_debug() -> bool:
-    return _settings.get("debug")
+    return _settings.get("debug", False)  # Still using default for non-critical debug
 
 
+# Weather settings
 def get_latitude() -> float:
-    return _settings.get("latitude")
+    return float(get_value("weather/latitude"))
 
 
 def get_longitude() -> float:
-    return _settings.get("longitude")
+    return float(get_value("weather/longitude"))
 
 
 def get_exclude() -> str:
-    return _settings.get("exclude")
+    return get_value("weather/exclude")
 
 
 def get_units() -> str:
-    return _settings.get("units")
+    return get_value("weather/units")
 
 
 def get_language() -> str:
-    return _settings.get("language")
+    return get_value("weather/language")
 
 
 def get_weather_request_interval() -> int:
-    return _settings.get("weather_request_interval")
+    return get_value("weather/weather_request_interval")
 
 
 def get_api_key() -> str:
-    return _settings.get("api_key")
+    return get_value("weather/api_key")
 
 
+def get_effects() -> bool:
+    return get_value("weather/effects")
+
+
+# Display settings
 def get_display_height() -> int:
-    return _settings.get("display_height")
+    return get_value("display/display_height")
 
 
 def get_display_width() -> int:
-    return _settings.get("display_width")
+    return get_value("display/display_width")
 
 
 def get_target_fps() -> int:
-    return _settings.get("target_fps")
+    return get_value("display/target_fps")
 
 
-def get_effect() -> bool:
-    return _settings.get("effects")
+def get_effects() -> bool:
+    return get_value("display/effects")
 
 
 def get_pin() -> int:
-    return _settings.get("pin")
+    return get_value("display/pin")
 
 
 def get_target_frequency() -> int:
-    return _settings.get("target_frequency")
+    return get_value("display/target_frequency")
 
 
 def get_dma() -> int:
-    return _settings.get("dma")
+    return get_value("display/dma")
 
 
 def get_strip_type() -> int:
-    return _settings.get("strip_type")
+    return get_value("display/strip_type")
 
 
-def get_inverted() -> int:
-    return _settings.get("inverted")
-
-
-def get_brightness_day() -> int:
-    return _settings.get("brightness_day")
-
-
-def get_brightness_night() -> int:
-    return _settings.get("brightness_night")
+def get_inverted() -> bool:
+    return get_value("display/inverted")
 
 
 def get_change_brightness() -> bool:
-    return _settings.get("change_brightness")
+    return get_value("display/change_brightness")
 
 
 def get_channel() -> int:
-    return _settings.get("channel")
+    return get_value("display/channel")
+
+
+def get_brightness_day() -> int:
+    return get_value("display/brightness")
+
+
+def get_brightness_night() -> int:
+    return get_value("display/brightness_night")
+
+
+def switch_brightness() -> bool:
+    return get_value("display/switch_brightness")
+
+
+# Network settings
+def get_port() -> int:
+    return get_value("network/port")

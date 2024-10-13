@@ -67,3 +67,6 @@ class DebugDisplay(display.Display):
         pygame.quit()
         # Kill to also stop threads
         os.kill(os.getpid(), signal.SIGTERM)
+
+    def set_brightness(self, brightness: int):
+        print(f"Setting brightness to {brightness}")

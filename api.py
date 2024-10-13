@@ -1,10 +1,19 @@
-from http.server import BaseHTTPRequestHandler, HTTPServer
 import json
+from http.server import BaseHTTPRequestHandler, HTTPServer
+from typing import Dict
 
-# todo: add this to led display, receive brightness, color, and effect
+import settings
+from display.base import Display, StubDisplay
 
-# Define a simple HTTP server that listens on port 8080
+PORT = settings.get_port()
+
+
+# Define a simple HTTP server that listens on the specified port
 class SimpleHandler(BaseHTTPRequestHandler):
+
+    def __init__(self, *args, display: Display, **kwargs):
+        self.display = display
+        super().__init__(*args, **kwargs)
 
     def do_POST(self):
         # Check if content type is application/json
@@ -23,6 +32,9 @@ class SimpleHandler(BaseHTTPRequestHandler):
             response = {"code": 200, "message": "OK"}
             self.wfile.write(json.dumps(response).encode("utf-8"))
 
+            # Process the received data
+            self.process_data(data)
+
         except json.JSONDecodeError:
             # Handle invalid JSON
             self.send_response(400)
@@ -30,13 +42,23 @@ class SimpleHandler(BaseHTTPRequestHandler):
             self.end_headers()
             self.wfile.write(json.dumps({"error": "Invalid JSON"}).encode("utf-8"))
 
+    def process_data(self, data: Dict):
+        if "brightness" in data:
+            brightness = int(data["brightness"])
+            self.display.set_brightness(brightness)
 
-def run(server_class=HTTPServer, handler_class=SimpleHandler, port=8080):
-    server_address = ("", port)
-    httpd = server_class(server_address, handler_class)
-    print(f"Starting server on port {port}")
+
+def run(display=None):
+    def handler(*args, **kwargs):
+        # Pass the display to the handler
+        SimpleHandler(display=display, *args, **kwargs)
+
+    server_address = ("", PORT)
+    httpd = HTTPServer(server_address, handler)
+    print(f"Starting server on port {PORT}")
     httpd.serve_forever()
 
 
 if __name__ == "__main__":
-    run()
+    stub = StubDisplay()
+    run(display=stub)

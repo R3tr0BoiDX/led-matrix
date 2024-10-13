@@ -7,6 +7,7 @@ from typing import List
 
 import requests
 
+import api
 import buffer as buf
 import colors
 import graphics
@@ -28,6 +29,30 @@ RUNNING = True
 
 lock_time = threading.Lock()
 lock_weather = threading.Lock()
+
+
+def change_brightness(weather_data: WeatherData):
+
+    # Get key times of the day
+    now = int(time.time())
+    sunrise = weather_data.current.sunrise
+    sunset = weather_data.current.sunset
+
+    # Get the brightness
+    brightness = (
+        settings.get_brightness_day()
+        if sunrise < now < sunset
+        else settings.get_brightness_night()
+    )
+
+    # Set the brightness
+    buf.get_display().set_brightness(brightness)
+
+    # Set a timer to update the brightness again
+    # (based on weather request interval, as sunrise and sunset times are sourced from the weather data)
+    threading.Timer(
+        settings.get_weather_request_interval(), change_brightness, args=(weather_data,)
+    ).start()
 
 
 def draw_time(buffer: List[List[Pixel]], show_colon: bool) -> None:
@@ -114,6 +139,10 @@ def main():
     width = settings.get_display_width()
     height = settings.get_display_height()
 
+    # Change brightness based on time of day
+    if settings.get_change_brightness():
+        change_brightness(weather_data_provider.weather)
+
     # Draw time
     time_buffer = buf.get_new_buffer(width, height)
     draw_time(time_buffer, False)
@@ -125,11 +154,15 @@ def main():
 
     # Initialize effects
     effect_buffer = buf.get_new_buffer(width, height)
-    if settings.get_effect():
+    if settings.get_effects():
         # SnowEffect((width, height)).start(effect_buffer)
         # RainEffect((width, height)).start(effect_buffer)
         pass
 
+    # Start the API server in a separate thread
+    threading.Thread(target=api.run, args=(buf.get_display(),)).start()
+
+    # Calculate the redraw interval
     redraw_interval = (1000 / settings.get_target_fps()) / 1000  # seconds
 
     # Main loop

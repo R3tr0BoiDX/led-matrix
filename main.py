@@ -4,6 +4,7 @@ import threading
 import time
 from datetime import datetime
 from typing import List
+import logging
 
 import requests
 
@@ -16,7 +17,7 @@ import settings
 # from effects.rain import RainEffect
 # from effects.snow import SnowEffect
 from pixel import Pixel
-from weather import WeatherData, get_weather
+from weather import get_weather
 
 INTERVAL_UPDATE_TIME = 1  # seconds
 TARGET_FPS = 24  # frames per second
@@ -30,13 +31,51 @@ RUNNING = True
 lock_time = threading.Lock()
 lock_weather = threading.Lock()
 
+# Set up logging
+# todo: create better logger and use everywhere
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
 
-def change_brightness(weather_data: WeatherData):
+
+# todo: move to weather.py
+class WeatherFetcher:
+    def __init__(self):
+        self.weather = None
+
+    def get_weather_data(self):
+        # Try fetching weather data
+        try:
+            self.weather = get_weather()
+            logger.info("Weather data fetched")
+        except requests.exceptions.RequestException as e:
+            logger.error("Error fetching weather data: %s", e)
+
+        # Set a timer to fetch data again
+        threading.Timer(
+            settings.get_weather_request_interval(), self.get_weather_data
+        ).start()
+
+
+def change_brightness(weather_data: WeatherFetcher):
+
+    # Set a timer to update the brightness again
+    # (based on weather request interval, as sunrise and sunset times are sourced from the weather data)
+    threading.Timer(
+        settings.get_weather_request_interval(), change_brightness, args=(weather_data,)
+    ).start()
+
+    # Check if weather data is available
+    if not weather_data.weather:
+        logger.error("Weather data not available")
+        return
 
     # Get key times of the day
     now = int(time.time())
-    sunrise = weather_data.current.sunrise
-    sunset = weather_data.current.sunset
+    sunrise = weather_data.weather.current.sunrise
+    sunset = weather_data.weather.current.sunset
+
+    # Log out if its day or night mode using a ternary operator
+    logger.info("Now is day mode" if sunrise < now < sunset else "Now is night mode")
 
     # Get the brightness
     brightness = (
@@ -47,12 +86,7 @@ def change_brightness(weather_data: WeatherData):
 
     # Set the brightness
     buf.get_display().set_brightness(brightness)
-
-    # Set a timer to update the brightness again
-    # (based on weather request interval, as sunrise and sunset times are sourced from the weather data)
-    threading.Timer(
-        settings.get_weather_request_interval(), change_brightness, args=(weather_data,)
-    ).start()
+    logger.info("Brightness set to %s", brightness)
 
 
 def draw_time(buffer: List[List[Pixel]], show_colon: bool) -> None:
@@ -87,39 +121,28 @@ def draw_time(buffer: List[List[Pixel]], show_colon: bool) -> None:
     ).start()
 
 
-def draw_weather(buffer: List[List[Pixel]], weather_data: WeatherData) -> None:
-    # Create a new buffer based on the given buffer size
-    work_buffer = buf.get_new_buffer(len(buffer[0]), len(buffer))
-
-    icon = weather_data.current.weather[0].icon
-    data = graphics.read_image(graphics.get_filepath(icon))
-    graphics.draw_graphic(work_buffer, data, WEATHER_OFFSET)
-
-    with lock_weather:
-        # Copy the work buffer to the display buffer
-        buf.copy_buffers(work_buffer, buffer)
+def draw_weather(buffer: List[List[Pixel]], weather_data: WeatherFetcher) -> None:
 
     # Set a timer to update the time
     threading.Timer(
         INTERVAL_UPDATE_TIME, draw_weather, args=(buffer, weather_data)
     ).start()
 
+    # Check if weather data is available
+    if not weather_data.weather:
+        logger.error("Weather data not available")
+        return
 
-class WeatherFetcher:
-    def __init__(self):
-        self.weather = None
+    # Create a new buffer based on the given buffer size
+    work_buffer = buf.get_new_buffer(len(buffer[0]), len(buffer))
 
-    def get_weather_data(self):
-        # Try fetching weather data
-        try:
-            self.weather = get_weather()
-        except requests.exceptions.RequestException as e:
-            print("Error fetching weather data:", e)
+    icon = weather_data.weather.current.weather[0].icon
+    data = graphics.read_image(graphics.get_filepath(icon))
+    graphics.draw_graphic(work_buffer, data, WEATHER_OFFSET)
 
-        # Set a timer to fetch data again
-        threading.Timer(
-            settings.get_weather_request_interval(), self.get_weather_data
-        ).start()
+    with lock_weather:
+        # Copy the work buffer to the display buffer
+        buf.copy_buffers(work_buffer, buffer)
 
 
 def shutdown():
@@ -141,7 +164,7 @@ def main():
 
     # Change brightness based on time of day
     if settings.get_change_brightness():
-        change_brightness(weather_data_provider.weather)
+        change_brightness(weather_data_provider)
 
     # Draw time
     time_buffer = buf.get_new_buffer(width, height)
@@ -149,8 +172,7 @@ def main():
 
     # Draw weather
     weather_buffer = buf.get_new_buffer(width, height)
-    if weather_data_provider.weather:
-        draw_weather(weather_buffer, weather_data_provider.weather)
+    draw_weather(weather_buffer, weather_data_provider)
 
     # Initialize effects
     effect_buffer = buf.get_new_buffer(width, height)

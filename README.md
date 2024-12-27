@@ -14,6 +14,7 @@ general idea
 * weather displayed via effect
 * change outdoor temp on lil terminal to indoor humidity
 
-# todo
 
-* reimplement the night mode reduced brightness
+# Temporarily restoring Read/Write Access
+
+`sudo mount -o remount,rw /boot`

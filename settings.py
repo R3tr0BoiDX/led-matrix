@@ -75,7 +75,7 @@ def get_target_fps() -> int:
     return get_value("display/target_fps")
 
 
-def get_effects() -> bool:
+def get_effects_display() -> bool:
     return get_value("display/effects")
 
 

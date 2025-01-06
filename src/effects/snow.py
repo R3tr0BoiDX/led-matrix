@@ -2,11 +2,10 @@ import random
 import threading
 from typing import List, Tuple
 
-import buffer as buf
-import colors
-import graphics
-from effects import base
-from pixel import Pixel
+from src import buffer as buf
+from src import colors, graphics
+from src.effects import base
+from src.pixel import Pixel
 
 GRAVITY = 1
 SNOWFLAKE_COLOR = colors.P8_WHITE

@@ -3,13 +3,12 @@ from typing import List, Tuple
 
 from PIL import Image
 
-import colors
-import settings
-from pixel import Pixel
+from src import colors
+from src import settings
+from src.pixel import Pixel
 
 RESOURCES = settings.Resources().get_path()
 FILE_EXTENSION_PNG = ".png"
-FILE_EXTENSION_GIF = ".gif"
 
 
 def get_filepath(filename, file_extension=FILE_EXTENSION_PNG) -> Path:

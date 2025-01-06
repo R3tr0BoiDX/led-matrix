@@ -3,10 +3,9 @@ from typing import List, Tuple
 
 from rpi_ws281x import Color, PixelStrip
 
-import display.base as display
-import settings
-from pixel import Pixel
-import colors
+from src import colors, settings
+from src.display import base as display
+from src.pixel import Pixel
 
 
 def _led_matrix_translation(pos: Tuple[int, int], size: Tuple[int, int]) -> int:

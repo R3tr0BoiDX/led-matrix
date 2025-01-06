@@ -1,21 +1,21 @@
 from typing import List
 import platform
 
-import colors
-import settings
-from pixel import Pixel
+from src import settings
+from src import colors
+from src.pixel import Pixel
 
 # Only needed to initialize buffers and display
 _width = settings.Display().get_width()
 _height = settings.Display().get_height()
 
 if platform.machine() == "x86_64":
-    from display.debug import DebugDisplay
+    from src.display.debug import DebugDisplay
 
     _display = DebugDisplay(_width, _height)
 
 elif platform.machine() == "armv6l":
-    from display.led import LedDisplay
+    from src.display.led import LedDisplay
 
     _display = LedDisplay((_width, _height))
 

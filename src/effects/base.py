@@ -1,7 +1,7 @@
 from abc import ABC, abstractmethod
 from typing import List, Tuple
 
-from pixel import Pixel
+from src.pixel import Pixel
 
 
 class Effect(ABC):

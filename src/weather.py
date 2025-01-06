@@ -1,7 +1,7 @@
 import threading
 import requests
 
-import settings
+from src import settings
 
 BASE_URL = "https://api.openweathermap.org/data/3.0/onecall"
 TIMEOUT = 10

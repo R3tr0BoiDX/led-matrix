@@ -2,8 +2,8 @@ import json
 from http.server import BaseHTTPRequestHandler, HTTPServer
 from typing import Dict
 
-import settings
-from display.base import Display, StubDisplay
+from src import settings
+from src.display.base import Display, StubDisplay
 
 PORT = settings.Network().get_api_port()
 

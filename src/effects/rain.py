@@ -2,11 +2,10 @@ import random
 import threading
 from typing import List, Tuple
 
-from effects import base
-from pixel import Pixel
-import colors
-import graphics
-import buffer as buf
+from src import buffer as buf
+from src import colors, graphics
+from src.effects import base
+from src.pixel import Pixel
 
 RAIN_COLOR = colors.P8_DARK_BLUE
 

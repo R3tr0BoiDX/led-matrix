@@ -11,6 +11,6 @@
 #cp -r "$SOURCE_DIR"/{.,}* "$TARGET_DIR"
 
 # Run the Python script
-#sudo /mnt/ram/led-matrix/.venv/bin/python /mnt/ram/led-matrix/main.py
+#sudo /mnt/ram/led-matrix/.venv/bin/python /mnt/ram/led-matrix/src/main.py
 
-sudo .venv/bin/python main.py
+sudo .venv/bin/python src/main.py

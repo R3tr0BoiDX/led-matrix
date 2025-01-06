@@ -5,9 +5,10 @@ from typing import List
 os.environ["PYGAME_HIDE_SUPPORT_PROMPT"] = "1"
 import pygame
 
-import colors
-import display.base as display
-from pixel import Pixel
+from src import colors
+from src.display import base as display
+from src.pixel import Pixel
+
 
 PIXEL_SIZE = 40
 

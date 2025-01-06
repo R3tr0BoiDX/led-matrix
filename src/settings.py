@@ -278,3 +278,56 @@ class Network:
 
     def get_api_port(self) -> int:
         return self._api_port
+
+
+# Logging settings
+class Logging:
+    _instance = None
+
+    _level: str
+    _path: str
+    _to_file: bool
+    _to_console: bool
+    _format: str
+    _file_timestamp: str
+    _max_size: int
+    _max_backups: int
+
+    def __new__(cls):
+        if cls._instance is None:
+            cls._instance = super().__new__(cls)
+
+            # Cache the values
+            cls._instance._level = get_value("logging/level")
+            cls._instance._path = get_value("logging/path")
+            cls._instance._to_file = get_value("logging/to_file")
+            cls._instance._to_console = get_value("logging/to_console")
+            cls._instance._format = get_value("logging/format")
+            cls._instance._file_timestamp = get_value("logging/file_timestamp")
+            cls._instance._max_size = get_value("logging/max_size")
+            cls._instance._max_backups = get_value("logging/max_backups")
+        return cls._instance
+
+    def get_level(self) -> str:
+        return self._level.upper()
+
+    def get_path(self) -> str:
+        return self._path
+
+    def to_file(self) -> bool:
+        return self._to_file
+
+    def to_console(self) -> bool:
+        return self._to_console
+
+    def get_format(self) -> str:
+        return self._format
+
+    def get_file_timestamp(self) -> str:
+        return self._file_timestamp
+
+    def get_max_size(self) -> int:
+        return self._max_size
+
+    def get_max_backups(self) -> int:
+        return self._max_backups

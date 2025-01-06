@@ -6,16 +6,13 @@ import time
 from datetime import datetime
 from typing import List
 
-import api
-import buffer as buf
-import colors
-import graphics
-import settings
+from src import buffer as buf
+from src import api, colors, graphics, settings
+from src.pixel import Pixel
+from src.weather import WeatherProvider
 
-# from effects.rain import RainEffect
-# from effects.snow import SnowEffect
-from pixel import Pixel
-from weather import WeatherProvider
+# from src.effects.rain import RainEffect
+# from src.effects.snow import SnowEffect
 
 RUNNING = True
 

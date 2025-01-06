@@ -4,7 +4,7 @@ After=network.target
 
 [Service]
 Type=oneshot
-ExecStart=/bin/bash /home/syd/led-matrix/start.sh
+ExecStart=/bin/bash /home/syd/led-matrix/scripts/start.sh
 User=root
 Group=root
 WorkingDirectory=/home/syd/led-matrix

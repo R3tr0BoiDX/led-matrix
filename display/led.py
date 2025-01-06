@@ -36,13 +36,13 @@ class LedDisplay(display.Display):
         # todo: gamma
         self.leds = PixelStrip(
             self.ledCount,
-            settings.get_pin(),
-            settings.get_target_frequency(),
-            settings.get_dma(),
-            settings.get_inverted(),
-            settings.get_brightness_day(),
-            settings.get_channel(),
-            settings.get_strip_type(),
+            settings.Display().get_pin(),
+            settings.Display().get_target_frequency(),
+            settings.Display().get_dma(),
+            settings.Display().get_inverted(),
+            settings.Display().get_brightness_day(),
+            settings.Display().get_channel(),
+            settings.Display().get_strip_type(),
             # look at the rpi_ws281x documentation for more options
             # https://github.com/jgarff/rpi_ws281x/blob/1f47b59ed603223d1376d36c788c89af67ae2fdc/ws2811.h#L47
         )

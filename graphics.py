@@ -4,9 +4,10 @@ from typing import List, Tuple
 from PIL import Image
 
 import colors
+import settings
 from pixel import Pixel
 
-RESOURCES = "res"
+RESOURCES = settings.Resources().get_path()
 FILE_EXTENSION_PNG = ".png"
 FILE_EXTENSION_GIF = ".gif"
 

@@ -6,17 +6,19 @@ import settings
 from pixel import Pixel
 
 # Only needed to initialize buffers and display
-_width = settings.get_display_width()
-_height = settings.get_display_height()
+_width = settings.Display().get_width()
+_height = settings.Display().get_height()
 
 if platform.machine() == "x86_64":
     from display.debug import DebugDisplay
 
     _display = DebugDisplay(_width, _height)
+
 elif platform.machine() == "armv6l":
     from display.led import LedDisplay
 
     _display = LedDisplay((_width, _height))
+
 else:
     raise NotImplementedError("Unsupported platform")
 
@@ -28,6 +30,7 @@ def get_new_buffer(width: int, height: int) -> List[List[Pixel]]:
     ]
 
 
+# todo: move to end of file?
 def get_display():
     return _display
 

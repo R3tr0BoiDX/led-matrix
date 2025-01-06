@@ -5,7 +5,7 @@ from typing import Dict
 import settings
 from display.base import Display, StubDisplay
 
-PORT = settings.get_port()
+PORT = settings.Network().get_api_port()
 
 
 # Define a simple HTTP server that listens on the specified port

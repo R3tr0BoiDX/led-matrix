@@ -1,6 +1,7 @@
 from abc import ABC, abstractmethod
 from typing import List
 
+from src import log
 from src.pixel import Pixel
 
 
@@ -27,17 +28,20 @@ class Display(ABC):
 
 
 class StubDisplay(Display):
+
+    logger = log.get_logger(__name__)
+
     def display(self):
-        print("Displaying pixels")
+        self.logger.debug("Displaying pixels")
 
     def update(self, pixel_array: List[List[Pixel]]):
-        print(f"Updating pixels, received {len(pixel_array)} rows")
+        self.logger.debug("Updating pixels, received %s rows", len(pixel_array))
 
     def clear(self):
-        print("Clearing pixels")
+        self.logger.debug("Clearing pixels")
 
     def shutdown(self):
-        print("Shutting down display")
+        self.logger.debug("Shutting down display")
 
     def set_brightness(self, brightness: int):
-        print(f"Setting brightness to {brightness}")
+        self.logger.debug("Setting brightness to %s", brightness)

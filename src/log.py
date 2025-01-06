@@ -7,7 +7,8 @@ from typing import List
 
 from src import settings
 
-REMOVE_ANSI_RE = r"\x1B(?:[@-Z\\-_]|\[[0-?]*[ -/]*[@-~])"  # from https://stackoverflow.com/a/14693789
+# from https://stackoverflow.com/a/14693789
+REMOVE_ANSI_RE = r"\x1B(?:[@-Z\\-_]|\[[0-?]*[ -/]*[@-~])"
 REGISTERED_LOGGERS: List[logging.Logger] = []
 
 LOG_FILE_NAME = (
@@ -62,6 +63,7 @@ class ColoredFormatter(logging.Formatter):
         + ANSIColors.RESET,
     }
 
+    # Add color to log entries
     def format(self, record: logging.LogRecord) -> str:
         log_fmt = self.FORMATS.get(record.levelno, settings.Logging().get_format())
         return logging.Formatter(log_fmt).format(record)
@@ -70,16 +72,18 @@ class ColoredFormatter(logging.Formatter):
 class FileLoggerFormatter(logging.Formatter):
     regex = re.compile(REMOVE_ANSI_RE)
 
+    # Remove ANSI color codes from log entries for log files
     def format(self, record: logging.LogRecord) -> str:
         entry = super().format(record)
         return self.regex.sub("", entry)
 
 
-def setup_logging() -> None:
+def setup_logging():
 
     # Check if the log directory exists
-    if not os.path.exists(settings.Logging().get_path()):
-        os.makedirs(settings.Logging().get_path())
+    if settings.Logging().to_file():
+        if not os.path.exists(settings.Logging().get_path()):
+            os.makedirs(settings.Logging().get_path())
 
     # Configure the logger
     logging.config.dictConfig(get_logger_config())
@@ -92,13 +96,15 @@ def get_logger(name: str) -> logging.Logger:
     return logger
 
 
-def update_log_level(level: int) -> None:
-    for logger in REGISTERED_LOGGERS:
-        logger.setLevel(level)
-
-
 def get_logger_config() -> dict:
-    return {
+    # Get logging configuration settings
+    log_level = settings.Logging().get_level()
+    log_format = settings.Logging().get_format()
+    max_size = settings.Logging().get_max_size()
+    max_backups = settings.Logging().get_max_backups()
+
+    # Base config structure
+    config = {
         "version": 1,
         "disable_existing_loggers": False,
         "formatters": {
@@ -107,26 +113,35 @@ def get_logger_config() -> dict:
             },
             "file": {
                 "()": FileLoggerFormatter,
-                "format": settings.Logging().get_format(),
+                "format": log_format,
             },
         },
-        "handlers": {
-            "console": {
-                "class": "logging.StreamHandler",
-                "formatter": "colored",
-                "level": settings.Logging().get_level(),
-            },
-            "file": {
-                "class": "logging.handlers.RotatingFileHandler",
-                "formatter": "file",
-                "level": settings.Logging().get_level(),
-                "filename": LOG_FILE_PATH,
-                "maxBytes": settings.Logging().get_max_size(),
-                "backupCount": settings.Logging().get_max_backups(),
-            },
-        },
+        "handlers": {},
         "root": {
-            "handlers": ["console", "file"],
-            "level": settings.Logging().get_level(),
+            "handlers": [],
+            "level": log_level,
         },
     }
+
+    # If logging to console is enabled, add a console handler
+    if settings.Logging().to_console():
+        config["handlers"]["console"] = {
+            "class": "logging.StreamHandler",
+            "formatter": "colored",
+            "level": log_level,
+        }
+        config["root"]["handlers"].append("console")
+
+    # If logging to file is enabled, add a file handler
+    if settings.Logging().to_file():
+        config["handlers"]["file"] = {
+            "class": "logging.handlers.RotatingFileHandler",
+            "formatter": "file",
+            "level": log_level,
+            "filename": LOG_FILE_PATH,
+            "maxBytes": max_size,
+            "backupCount": max_backups,
+        }
+        config["root"]["handlers"].append("file")
+
+    return config

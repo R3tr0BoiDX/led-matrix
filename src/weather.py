@@ -1,10 +1,13 @@
 import threading
+
 import requests
 
-from src import settings
+from src import log, settings
 
 BASE_URL = "https://api.openweathermap.org/data/3.0/onecall"
 TIMEOUT = 10
+
+logger = log.get_logger(__name__)
 
 
 class WeatherProvider:
@@ -15,10 +18,9 @@ class WeatherProvider:
         # Try fetching weather data
         try:
             self.weather = get_weather()
-            # logger.info("Weather data fetched")
+            logger.info("Weather data fetched")
         except requests.exceptions.RequestException as e:
-            # logger.error("Error fetching weather data: %s", e)
-            print("Error fetching weather data: %s", e)
+            logger.error("Error fetching weather data: %s", e)
 
         # Set a timer to fetch data again
         threading.Timer(
@@ -81,8 +83,9 @@ class WeatherData:
 def call_api(params: dict) -> dict:
     response = requests.get(BASE_URL, params=params, timeout=TIMEOUT)
     if response.status_code == 200:
+        logger.debug("OpenWeatherMap API call successful, response: %s", response.json())
         return response.json()
-    raise requests.exceptions.RequestException("API call failed")
+    raise requests.exceptions.RequestException("OpenWeatherMap API call failed")
 
 
 def get_weather() -> WeatherData:

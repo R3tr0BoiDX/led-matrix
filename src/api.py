@@ -2,10 +2,12 @@ import json
 from http.server import BaseHTTPRequestHandler, HTTPServer
 from typing import Dict
 
-from src import settings
+from src import settings, log
 from src.display.base import Display, StubDisplay
 
 PORT = settings.Network().get_api_port()
+
+logger = log.get_logger(__name__)
 
 
 # Define a simple HTTP server that listens on the specified port
@@ -23,7 +25,7 @@ class SimpleHandler(BaseHTTPRequestHandler):
         try:
             # Parse the JSON payload
             data = json.loads(post_data)
-            print(f"Received data: {data}")
+            logger.debug("Received data: %s", data)
 
             # Respond with the received JSON data
             self.send_response(200)
@@ -31,6 +33,7 @@ class SimpleHandler(BaseHTTPRequestHandler):
             self.end_headers()
             response = {"code": 200, "message": "OK"}
             self.wfile.write(json.dumps(response).encode("utf-8"))
+            logger.debug("Response sent: %s", response)
 
             # Process the received data
             self.process_data(data)
@@ -41,9 +44,11 @@ class SimpleHandler(BaseHTTPRequestHandler):
             self.send_header("Content-type", "application/json")
             self.end_headers()
             self.wfile.write(json.dumps({"error": "Invalid JSON"}).encode("utf-8"))
+            logger.warning("Invalid JSON data received")
 
     def process_data(self, data: Dict):
         if "brightness" in data:
+            logger.debug("Brightness found in data: %s", data["brightness"])
             brightness = int(data["brightness"])
             self.display.set_brightness(brightness)
 
@@ -55,7 +60,7 @@ def run(display=None):
 
     server_address = ("", PORT)
     httpd = HTTPServer(server_address, handler)
-    print(f"Starting server on port {PORT}")
+    logger.info("Starting server on port %s", PORT)
     httpd.serve_forever()
 
 

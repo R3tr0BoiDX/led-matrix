@@ -6,7 +6,7 @@ from typing import List
 os.environ["PYGAME_HIDE_SUPPORT_PROMPT"] = "1"
 import pygame
 
-from src import colors, log
+from src import colors, log, settings
 from src.display import base as display
 from src.pixel import Pixel
 
@@ -72,6 +72,18 @@ class DebugDisplay(display.Display):
                                 x * PIXEL_SIZE, y * PIXEL_SIZE, PIXEL_SIZE, PIXEL_SIZE
                             ),
                         )
+            
+            # Add a little indicator after each 8 pixels
+            if settings.Debug().show_segments():
+                for x in range(0, self.width, 8):
+                    pygame.draw.rect(
+                        self.screen,
+                        colors.P8_RED,
+                        pygame.Rect(
+                            x * PIXEL_SIZE, 0, 1, self.height * PIXEL_SIZE
+                        ),
+                    )
+                
         except pygame.error as e:
             logger.debug("Error updating pixels: %s", e)
 

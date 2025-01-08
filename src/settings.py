@@ -24,11 +24,6 @@ def get_value(path: str):
         raise KeyError(f"Missing required setting for YAML path: '{path}'") from e
 
 
-# General settings
-def get_debug() -> bool:
-    return _settings.get("debug", False)  # Still using default for non-critical debug
-
-
 # Clock settings
 class Clock:
     _instance = None
@@ -89,6 +84,7 @@ class Weather:
     _offset_x: int
     _offset_y: int
     _offset_delta: int
+    _offset_between: int
     _swap_icon_temp: bool
 
     def __new__(cls):
@@ -109,6 +105,7 @@ class Weather:
             cls._instance._offset_x = get_value("weather/offset_x")
             cls._instance._offset_y = get_value("weather/offset_y")
             cls._instance._offset_delta = get_value("weather/offset_delta")
+            cls._instance._offset_between = get_value("weather/offset_between")
             cls._instance._swap_icon_temp = get_value("weather/swap_icon_temp")
         return cls._instance
 
@@ -117,6 +114,9 @@ class Weather:
 
     def show_temp(self) -> bool:
         return self._show_temp
+
+    def get_effects(self) -> bool:
+        return self._effects
 
     def get_latitude(self) -> float:
         return self._latitude
@@ -145,11 +145,11 @@ class Weather:
     def get_offset_y(self) -> int:
         return self._offset_y
 
-    def get_effects(self) -> bool:
-        return self._effects
-
     def get_offset_delta(self) -> int:
         return self._offset_delta
+
+    def get_offset_between(self) -> int:
+        return self._offset_between
 
     def swap_icon_temp(self) -> bool:
         return self._swap_icon_temp
@@ -331,3 +331,21 @@ class Logging:
 
     def get_max_backups(self) -> int:
         return self._max_backups
+
+
+# Debug settings
+class Debug:
+    _instance = None
+
+    _show_segments: bool
+
+    def __new__(cls):
+        if cls._instance is None:
+            cls._instance = super().__new__(cls)
+
+            # Cache the values
+            cls._instance._show_segments = get_value("debug/show_segments")
+        return cls._instance
+
+    def show_segments(self) -> bool:
+        return self._show_segments

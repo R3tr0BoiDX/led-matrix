@@ -1,7 +1,7 @@
 debug: true
 clock:
   show: true
-  time_format: "%H:%M"
+  time_format: "%H:%M"  # do not use any other separator than ":"
   show_seconds: true
   offset_x: 3
   offset_y: 0
@@ -20,6 +20,7 @@ weather:
   offset_x: 22
   offset_y: 0
   offset_delta: 4
+  offset_between: 2
   swap_icon_temp: false
 display:
   height: 8
@@ -40,3 +41,14 @@ resources:
   path: "res"
 network:
   api_port: 8080
+logging:
+  level: "info"
+  path: "logs"
+  to_file: false
+  to_console: true
+  format: "%(asctime)s\t%(name)s\t%(levelname)-8s\t%(message)s\t[%(filename)s:%(lineno)d]"
+  file_timestamp: "%Y-%m-%d_%H-%M-%S-%f_%a_UTC"
+  max_size: 10485760  # bytes; 10 MB
+  max_backups: 5
+debug:
+  show_segments: true

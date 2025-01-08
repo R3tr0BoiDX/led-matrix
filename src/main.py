@@ -53,8 +53,23 @@ def change_brightness(weather_data: WeatherProvider):
     )
 
     # Set the brightness
-    logger.info("Setting brightness to %s", "day mode" if sunrise < now < sunset else "night mode")
+    logger.info(
+        "Setting brightness to %s",
+        "day mode" if sunrise < now < sunset else "night mode",
+    )
     buf.get_display().set_brightness(brightness)
+
+
+def draw_char(
+    buffer: List[List[Pixel]], char: str, offset: tuple, offset_delta: int
+) -> tuple:
+    data = graphics.read_image(graphics.get_filepath(char))
+    graphics.draw_graphic(buffer, data, offset, colors.TIME_COLOR)
+    offset = (offset[0] + len(data[0]) + offset_delta, offset[1])
+    logger.debug(
+        "Drawing character %s, adding %s to offset", char, len(data[0]) + offset_delta
+    )
+    return offset
 
 
 def draw_time(buffer: List[List[Pixel]], show_colon: bool) -> None:
@@ -65,8 +80,10 @@ def draw_time(buffer: List[List[Pixel]], show_colon: bool) -> None:
     # Update the on-screen time
     now = datetime.now().strftime(settings.Clock().get_time_format())
     offset = (settings.Clock().get_offset_x(), settings.Clock().get_offset_y())
+    offset_char = settings.Clock().get_offset_delta()
+
+    logger.debug("Drawing time %s", now)
     for char in str(now):
-        offset_char = settings.Clock().get_offset_delta()
 
         # Handle the colon character specially
         if char == ":":
@@ -86,12 +103,7 @@ def draw_time(buffer: List[List[Pixel]], show_colon: bool) -> None:
                 continue
 
         # Draw the character
-        data = graphics.read_image(graphics.get_filepath(char))
-        graphics.draw_graphic(work_buffer, data, offset, colors.TIME_COLOR)
-        offset_char = settings.Clock().get_offset_delta()
-        offset = (offset[0] + len(data[0]) + offset_char, offset[1])
-        logger.debug("Drawing character %s, adding %s to offset", char, len(data[0]) + offset_char)
-    logger.debug("Drawing time %s", now)
+        offset = draw_char(work_buffer, char, offset, offset_char)
 
     with lock_time:
         # Copy the work buffer to the display buffer
@@ -124,24 +136,76 @@ def draw_weather(buffer: List[List[Pixel]], weather_data: WeatherProvider) -> No
     work_buffer = buf.get_new_buffer(len(buffer[0]), len(buffer))
     logger.debug("Creating new buffer with size %s x %s", len(buffer[0]), len)
 
-    # Draw the weather icon
-    if settings.Weather().show_icon():
-        icon = weather_data.weather.current.weather[0].icon
-        data = graphics.read_image(graphics.get_filepath(icon))
-        offset = (settings.Weather().get_offset_x(), settings.Weather().get_offset_y())
-        graphics.draw_graphic(work_buffer, data, offset)
-        logger.debug("Drawing weather icon %s", icon)
+    # Draw the first weather element
+    offset = (settings.Weather().get_offset_x(), settings.Weather().get_offset_y())
+    if settings.Weather().swap_icon_temp():
+        offset = draw_weather_temp(work_buffer, weather_data, offset)
+    else:
+        offset = draw_weather_icon(work_buffer, weather_data, offset)
 
-    # Draw the temperature
-    if settings.Weather().show_temp():
-        temp = weather_data.weather.current.temp
-        # todo: generic string drawing function
-        logger.debug("Drawing temperature %s", temp)
+    # Draw the second weather element
+    offset = (offset[0] + settings.Weather().get_offset_between(), offset[1])
+    if settings.Weather().swap_icon_temp():
+        offset = draw_weather_icon(work_buffer, weather_data, offset)
+    else:
+        offset = draw_weather_temp(work_buffer, weather_data, offset)
 
     with lock_weather:
         # Copy the work buffer to the display buffer
         buf.copy_buffers(work_buffer, buffer)
         logger.debug("Copying work buffer to display buffer")
+
+
+def draw_weather_icon(
+    buffer: List[List[Pixel]], weather_data: WeatherProvider, offset: tuple
+) -> tuple:
+    if not settings.Weather().show_icon():
+        return offset
+
+    icon = weather_data.weather.current.weather[0].icon
+    data = graphics.read_image(graphics.get_filepath(icon))
+    graphics.draw_graphic(buffer, data, offset)
+    offset = (offset[0] + len(data[0]), offset[1])
+    logger.debug("Drawing weather icon %s", icon)
+    return offset
+
+
+def draw_weather_temp(
+    buffer: List[List[Pixel]], weather_data: WeatherProvider, offset: tuple
+) -> tuple:
+    if not settings.Weather().show_temp():
+        return offset
+
+    # Format the temperature
+    temp = weather_data.weather.current.temp
+    temp = str(round(weather_data.weather.current.temp)).rjust(2, "x") + "°"
+    logger.debug("Drawing temperature %s", temp)
+
+    # Draw the temperature
+    offset_char = settings.Weather().get_offset_delta()
+    for i, char in enumerate(temp):
+
+        # When the character is a x, skip it, just add offset
+        if char == "x":
+            offset = (offset[0] + offset_char + 2, offset[1])
+            logger.debug("Skipping x, adding %s to offset", offset_char)
+            continue
+
+        # Handle the degree character specially
+        if char == "°":
+            char = "degree"
+            logger.debug("Drawing degree symbol")
+
+        # Check if the character is not the last one
+        if i != len(temp) - 1:
+            # Draw the character
+            offset = draw_char(buffer, char, offset, offset_char)
+        else:
+            # Draw the character and, but remove delta offset
+            offset = draw_char(buffer, char, offset, offset_char)
+            offset = (offset[0] - offset_char, offset[1])  # a lil hacky, but ehh
+
+    return offset
 
 
 def shutdown():

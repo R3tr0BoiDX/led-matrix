@@ -13,4 +13,4 @@
 # Run the Python script
 #sudo /mnt/ram/led-matrix/.venv/bin/python /mnt/ram/led-matrix/src/main.py
 
-sudo .venv/bin/python src/main.py
+sudo .venv/bin/python -m src.main

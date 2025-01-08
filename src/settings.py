@@ -338,6 +338,7 @@ class Debug:
     _instance = None
 
     _show_segments: bool
+    _show_grid: bool
 
     def __new__(cls):
         if cls._instance is None:
@@ -345,7 +346,11 @@ class Debug:
 
             # Cache the values
             cls._instance._show_segments = get_value("debug/show_segments")
+            cls._instance._show_grid = get_value("debug/show_grid")
         return cls._instance
 
     def show_segments(self) -> bool:
         return self._show_segments
+
+    def show_grid(self) -> bool:
+        return self._show_grid

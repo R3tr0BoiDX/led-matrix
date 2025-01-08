@@ -52,3 +52,4 @@ logging:
   max_backups: 5
 debug:
   show_segments: true
+  show_grid: true

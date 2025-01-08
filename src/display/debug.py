@@ -27,7 +27,11 @@ class DebugDisplay(display.Display):
         self.display_size = (width * PIXEL_SIZE, height * PIXEL_SIZE)
         self.screen = pygame.display.set_mode(self.display_size)
         pygame.display.set_caption(WINDOW_CAPTION)
-        logger.info("Initialized debug display with size %s and name %s", self.display_size, WINDOW_CAPTION)
+        logger.info(
+            "Initialized debug display with size %s and name %s",
+            self.display_size,
+            WINDOW_CAPTION,
+        )
 
         # Set always on top based on platform
         window = pygame.display.get_wm_info()["window"]
@@ -72,18 +76,31 @@ class DebugDisplay(display.Display):
                                 x * PIXEL_SIZE, y * PIXEL_SIZE, PIXEL_SIZE, PIXEL_SIZE
                             ),
                         )
-            
+
+            # Add a pixel grid to make it easier to see the pixels
+            if settings.Debug().show_grid():
+                for x in range(0, self.width):
+                    pygame.draw.rect(
+                        self.screen,
+                        colors.P8_DARK_GREY,
+                        pygame.Rect(x * PIXEL_SIZE, 0, 1, self.height * PIXEL_SIZE),
+                    )
+                for y in range(0, self.height):
+                    pygame.draw.rect(
+                        self.screen,
+                        colors.P8_DARK_GREY,
+                        pygame.Rect(0, y * PIXEL_SIZE, self.width * PIXEL_SIZE, 1),
+                    )
+
             # Add a little indicator after each 8 pixels
             if settings.Debug().show_segments():
                 for x in range(0, self.width, 8):
                     pygame.draw.rect(
                         self.screen,
                         colors.P8_RED,
-                        pygame.Rect(
-                            x * PIXEL_SIZE, 0, 1, self.height * PIXEL_SIZE
-                        ),
+                        pygame.Rect(x * PIXEL_SIZE, 0, 1, self.height * PIXEL_SIZE),
                     )
-                
+
         except pygame.error as e:
             logger.debug("Error updating pixels: %s", e)
 

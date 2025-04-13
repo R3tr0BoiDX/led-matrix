@@ -41,6 +41,12 @@ resources:
   path: "res"
 network:
   api_port: 8080
+  show_indicator: true
+  indicator_connect_color: "0x00FF00"  # green
+  indicator_disconnect_color: "0xFF0000"  # red
+  indicator_x: 0
+  indicator_y: 0
+  check_interval: 5  # seconds
 logging:
   level: "info"
   path: "logs"

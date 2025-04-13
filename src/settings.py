@@ -1,4 +1,5 @@
 import yaml
+from src import colors
 
 SETTINGS_FILE = "settings.yaml"
 
@@ -267,6 +268,12 @@ class Network:
     _instance = None
 
     _api_port: int
+    _show_indicator: bool
+    _indicator_connect_color: str
+    _indicator_disconnect_color: str
+    _indicator_x: int
+    _indicator_y: int
+    _check_interval: int
 
     def __new__(cls):
         if cls._instance is None:
@@ -274,10 +281,39 @@ class Network:
 
             # Cache the values
             cls._instance._api_port = get_value("network/api_port")
+            cls._instance._show_indicator = get_value("network/show_indicator")
+            cls._instance._indicator_connect_color = get_value(
+                "network/indicator_connect_color"
+            )
+            cls._instance._indicator_disconnect_color = get_value(
+                "network/indicator_disconnect_color"
+            )
+            cls._instance._indicator_x = get_value("network/indicator_x")
+            cls._instance._indicator_y = get_value("network/indicator_y")
+            cls._instance._check_interval = get_value("network/check_interval")
+
         return cls._instance
 
     def get_api_port(self) -> int:
         return self._api_port
+
+    def show_indicator(self) -> bool:
+        return self._show_indicator
+
+    def get_indicator_connect_color(self) -> tuple:
+        return colors.color_from_hex(self._indicator_connect_color)
+
+    def get_indicator_disconnect_color(self) -> tuple:
+        return colors.color_from_hex(self._indicator_disconnect_color)
+
+    def get_indicator_x(self) -> int:
+        return self._indicator_x
+
+    def get_indicator_y(self) -> int:
+        return self._indicator_y
+    
+    def get_check_interval(self) -> int:
+        return self._check_interval
 
 
 # Logging settings

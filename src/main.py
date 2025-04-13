@@ -7,7 +7,7 @@ from typing import List
 
 from src import api
 from src import buffer as buf
-from src import colors, graphics, log, settings
+from src import colors, graphics, log, settings, network_status
 from src.pixel import Pixel
 from src.weather import WeatherProvider
 
@@ -58,6 +58,43 @@ def change_brightness(weather_data: WeatherProvider):
         "day mode" if sunrise < now < sunset else "night mode",
     )
     buf.get_display().set_brightness(brightness)
+
+
+def draw_network_status(buffer: List[List[Pixel]]) -> None:
+    # Create a new buffer based on the given buffer size
+    work_buffer = buf.get_new_buffer(len(buffer[0]), len(buffer))
+    logger.debug("Creating new buffer with size %s x %s", len(buffer[0]), len)
+
+    # Update the network status
+    offset = (
+        settings.Network().get_indicator_x(),
+        settings.Network().get_indicator_y(),
+    )
+    color = settings.Network().get_indicator_disconnect_color()
+    if network_status.ping_host():
+        color = settings.Network().get_indicator_connect_color()
+        logger.debug("Network status: connected")
+    else:
+        logger.info("Network status: disconnected")
+
+    # Draw the network status indicator
+    graphics.draw_pixel(
+        work_buffer,
+        offset,
+        color,
+    )
+
+    # Set timer to update the network status
+    threading.Timer(
+        settings.Network().get_check_interval(),
+        draw_network_status,
+        args=(buffer,),
+    ).start()
+
+    # Copy the work buffer to the display buffer
+    # Hence its just a single pixel, we can just copy it directly. No lock needed.
+    buf.copy_buffers(work_buffer, buffer)
+    logger.debug("Copying work buffer to display buffer")
 
 
 def draw_char(
@@ -246,6 +283,12 @@ def main():
         logger.info("Start drawing weather")
         draw_weather(weather_buffer, weather_provider)
 
+    # Draw network status
+    network_buffer = buf.get_new_buffer(width, height)
+    if settings.Network().show_indicator():
+        logger.info("Start drawing network status")
+        draw_network_status(network_buffer)
+
     # Initialize effects
     effect_buffer = buf.get_new_buffer(width, height)
     if settings.Weather().get_effects():
@@ -265,6 +308,7 @@ def main():
     while RUNNING:
         # Write data to the buffer
         buf.write_to_buffer(effect_buffer)
+        buf.write_to_buffer(network_buffer)
         buf.write_to_buffer(weather_buffer)
         buf.write_to_buffer(time_buffer)
 
@@ -278,7 +322,7 @@ def main():
         time.sleep(redraw_interval)
 
     # Unexpected shutdown
-    logger.critical("Main loop exited unexpectedly!")
+    logger.critical("Main loop exited unexpectedly due to stray cosmic rays!")
     shutdown()
 
 

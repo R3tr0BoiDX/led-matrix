@@ -70,3 +70,15 @@ def draw_graphic(
 
                     # Draw the pixel
                     pixels[y + y_offset][x + x_offset] = pixel
+
+
+def draw_pixel(
+    pixels: List[List[Pixel]],
+    pos: Tuple[int, int],
+    color: Tuple[int, int, int],
+) -> None:
+    x, y = pos
+    # Check if the pixel is within the bounds of the display
+    if y < len(pixels) and x < len(pixels[0]):
+        # Draw the pixel
+        pixels[y][x] = Pixel(color)

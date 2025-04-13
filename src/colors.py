@@ -37,3 +37,17 @@ WEB_AQUA = (0, 255, 255)
 BACKGROUND_COLOR = WEB_BLACK
 TRANSPARENT_COLOR = WEB_BLACK
 TIME_COLOR = P8_WHITE
+
+
+def color_from_hex(hex_color):
+    """
+    Convert a hex color string to an RGB tuple.
+    """
+    hex_color = hex_color.replace("0x", "").replace("#", "")
+    rgb = (
+        (int(hex_color, 16) >> 16) & 255,
+        (int(hex_color, 16) >> 8) & 255,
+        int(hex_color, 16) & 255,
+    )
+
+    return rgb
